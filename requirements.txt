@@ -1,1 +1,2 @@
 nska_deserialize
+python-magic
