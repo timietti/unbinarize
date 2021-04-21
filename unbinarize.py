@@ -13,22 +13,20 @@ import re
 
 #### Constants
 
-RIGHT_NOW=strftime('%Y%m%d-%H%M%S', localtime())
 access_rights = 0o755
 
 usage = '\r\nunbinarize.py by Timo Miettinen 2020 \r\n'\
         'This script converts binary data from Apple devices to human readable\r\n'\
         'format and copies every piece of evidence to one folder.\r\n\r\n'\
-        'Usage: python unbinarize.py -h | [-f <path_to_ftree_binary>] -i <input_dir> -o <output_dir>\r\n'\
+        'Usage: python unbinarize.py -h | -i <input_dir> -o <output_dir>\r\n'\
         'Example: unbinarize.py -i ~/Documents/backup -o ~/Documents/output \r\n\r\n'
 
-usage_short = '\r\nUsage: python unbinarize.py -h | [-f <path_to_ftree_binary>] -i <input_dir> -o <output_dir>\r\n'
+usage_short = '\r\nUsage: python unbinarize.py -h | -i <input_dir> -o <output_dir>\r\n'
 
 #### Global variables
 
 input_dir = ''
 output_dir = ''
-#ftree = False
 n_nskeyed = 0
 n_text = 0
 n_bin = 0
@@ -42,21 +40,12 @@ def deserialize_file(path):
     with open(path, 'rb') as f:
         try:
             deserialized_plist = nd.deserialize_plist(f)
-#            print(deserialized_plist)
+        # These are all possible errors from libraries imported
         except (nd.DeserializeError, nd.biplist.NotBinaryPlistException, nd.biplist.InvalidPlistException, nd.ccl_bplist.BplistError, ValueError, TypeError, OSError, OverflowError) as ex:
-                # These are all possible errors from libraries imported
-#            print('Had exception: ' + str(ex))
             deserialized_plist = None
 
     if deserialized_plist:
-#        output_path_plist = outputdir + '_deserialized.plist'
-#        output_path_json  = outputdir + '_deserialized.json'
-
-#        nd.write_plist_to_json_file(deserialized_plist, output_path_json)
         nd.write_plist_to_file(deserialized_plist, path)
-#        with open(path, "wb") as out_plist:
-#            plistlib.dump(deserialized_plist, out_plist, fmt=plistlib.FMT_BINARY)
-#        print ("%s" % path)
         n_nskeyed = n_nskeyed + 1
 
 def find_files(path):
@@ -183,7 +172,6 @@ def main(argv):
         sys.exit()
 
     try:
-#        opts, args = getopt.getopt(argv,"hf:i:o:",["input=","output="])
         opts, args = getopt.getopt(argv,"hi:o:",["input=","output="])
     except getopt.GetoptError:
         print (usage_short)
@@ -192,9 +180,6 @@ def main(argv):
         if opt == '-h':
             print (usage)
             sys.exit()
-#        elif opt == '-f':
-#            ftree = True
-#            ftree_path = arg
         elif opt in ("-i", "--input"):
             input_dir = arg
         elif opt in ("-o", "--output"):
@@ -218,8 +203,7 @@ def main(argv):
     print ("[*] Deleting symbolic links from the input directory...")
     delete_links(input_dir)
 
-    # Convert NSKeyedArchive plist files to normal plists and copy to output
-    # folder.
+    # Convert NSKeyedArchive plist files to normal plists
     print ("[*] Converting NSKeyedArchive plist files in input directory to normal binary plist...")
     n_nskeyed = 0
     for root, dirs, files in os.walk(input_dir):
@@ -237,7 +221,6 @@ def main(argv):
     for root, dirs, files in os.walk(input_dir):
         for f in files:
             dump_file(os.path.join(root, f), path_to_filename(os.path.join(root, f)), magic.from_file(os.path.join(root, f)))
-#            print (magic.from_file(os.path.join(root, f)))
     print ("%i binary plist files copied to output directory." % n_bin)
     print ("%i xml plist files copied to output directory." % n_xml)
     print ("%i SQLite databases copied to output directory." % n_sql)
@@ -259,7 +242,6 @@ def main(argv):
         for f in files:
             if "Apple binary property list" in magic.from_file(os.path.join(root, f)):
                 dump_file(os.path.join(root, f), f, magic.from_file(os.path.join(root, f)))
-#            print (magic.from_file(os.path.join(root, f)))
     print ("%i binary plist files converted." % n_bin)
 
 if __name__ == "__main__":
